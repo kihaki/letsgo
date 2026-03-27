@@ -8,42 +8,45 @@ Works with any git repository. No project-specific configuration needed.
 
 ```bash
 git clone https://github.com/kihaki/letsgo.git
-cd orchestrator
+cd letsgo
 ./install.sh
 ```
 
 Then, from any git repo:
 
 ```bash
-# Interactive — opens Claude, you type /feature to begin
+# Interactive — prompts you to describe the feature, then starts the workflow
 letsgo
 
-# With a prompt — jumps straight into the workflow
-letsgo add dark mode support to the settings screen
+# With a quoted prompt — jumps straight into the workflow
+letsgo "add dark mode support to the settings screen"
 ```
+
+> **Note:** Always quote the prompt when passing it as an argument. Unquoted text with special characters like `(`, `)`, or `!` will be interpreted by your shell before `letsgo` sees it.
 
 ## What It Does
 
-`letsgo` creates a git worktree with an auto-generated branch off the default branch, then opens Claude Code in that isolated workspace. The `/feature` command drives a 9-phase workflow:
+`letsgo` creates a git worktree with an auto-generated branch off the default branch, then opens Claude Code in that isolated workspace. The `/feature` command drives a 10-phase workflow:
 
 ```
 Idea ──> Requirements ──> Plan ──> Code ──> PR
            reviewed       reviewed   reviewed   reviewed
 ```
 
-### The 9 Phases
+### The 10 Phases
 
 | # | Phase | What happens |
 |---|-------|-------------|
 | 1 | **Requirements** | Clarifying questions, writes `requirements.md` |
-| 2 | **Idea Review** | AI reviewer stress-tests the idea for scope, risks, and alternatives |
+| 2 | **Idea Review** | Reviewer stress-tests the idea for scope, risks, and alternatives |
 | 3 | **Branch Rename** | Renames random branch to descriptive name (e.g. `feature/add-dark-mode`) |
 | 4 | **Planning** | Explores codebase, writes `plan.md` with approach, changes, risks |
 | 5 | **Plan Review** | 5 specialized reviewers run in parallel (see below) |
-| 6 | **Implementation** | Executes the plan, runs lint/tests |
-| 7 | **Local Review** | Cold first-principles code review of the diff |
-| 8 | **Commits & PR** | Structured commits, push, create PR |
-| 9 | **GitHub Review** | Posts inline review comments, implementer addresses every one |
+| 6 | **Dry Run** | Trial implementation in isolated worktree to validate the plan |
+| 7 | **Implementation** | Executes the plan, runs lint/tests |
+| 8 | **Local Review** | Cold first-principles code review of the diff |
+| 9 | **Commits & PR** | Structured commits, push, create PR |
+| 10 | **GitHub Review** | Posts inline review comments, implementer addresses every one |
 
 Every phase with user interaction presents **selectable options** — click to proceed, no typing needed.
 
@@ -70,9 +73,19 @@ letsgo/
 ├── install.sh                  # Symlinks everything into place
 ├── bin/
 │   └── letsgo                  # CLI entry point
-└── commands/
-    ├── feature.md              # 9-phase workflow (/feature)
-    └── rename-branch.md        # Branch rename utility (/rename-branch)
+├── commands/
+│   ├── feature.md              # 10-phase workflow (/feature)
+│   └── rename-branch.md        # Branch rename utility (/rename-branch)
+└── reviewers/
+    ├── idea.md                 # Idea reviewer
+    ├── architecture.md         # Architecture reviewer
+    ├── edge-cases.md           # Edge case reviewer
+    ├── first-principles.md     # First principles reviewer
+    ├── simplicity.md           # Simplicity reviewer
+    ├── ecosystem.md            # Library & ecosystem reviewer
+    ├── dry-run.md              # Dry run validator
+    ├── local.md                # Pre-PR local reviewer
+    └── github.md               # GitHub PR reviewer
 ```
 
 After installation:
@@ -81,6 +94,7 @@ After installation:
 |--------|-------------|---------|
 | `bin/letsgo` | `~/.local/bin/letsgo` | Shell command |
 | `commands/*.md` | `~/.claude/commands/` | Claude Code slash commands |
+| `reviewers/*.md` | `~/.claude/letsgo/reviewers/` | Reviewer prompts |
 
 ### Worktree Structure
 
@@ -111,8 +125,9 @@ Workflow artifacts live in `/tmp/letsgo/<repo>/<branch>/artifacts/` — they are
     ├── review-first-principles.md # Phase 5
     ├── review-simplicity.md      # Phase 5
     ├── review-ecosystem.md       # Phase 5
-    ├── review-local.md       # Phase 7
-    └── changelog.md          # Phase 6
+    ├── review-dry-run.md         # Phase 6
+    ├── review-local.md       # Phase 8
+    └── changelog.md          # Phase 7
 ```
 
 ## Git Behavior

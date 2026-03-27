@@ -36,7 +36,38 @@ generate_branch_name() {
   echo "feature/${adj}-${noun}-${id}"
 }
 
+usage() {
+  echo "Usage: letsgo [-a|--auto] [prompt]"
+  echo ""
+  echo "  -a, --auto    Run fully autonomous — no checkpoints, straight to reviewed PR"
+  echo "  prompt        Feature description (quote it if it contains special characters)"
+  echo ""
+  echo "Examples:"
+  echo "  letsgo                                     # Interactive prompt"
+  echo "  letsgo \"add dark mode\"                     # Interactive workflow with prompt"
+  echo "  letsgo -a \"add dark mode\"                   # Fully autonomous"
+}
+
 main() {
+  local auto_mode=false
+
+  # Parse flags
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -a|--auto)
+        auto_mode=true
+        shift
+        ;;
+      -h|--help)
+        usage
+        exit 0
+        ;;
+      *)
+        break
+        ;;
+    esac
+  done
+
   if ! git rev-parse --git-dir &>/dev/null; then
     echo "Error: not inside a git repository."
     exit 1
@@ -113,19 +144,32 @@ SETTINGS
 
   local feature_md="${HOME}/.claude/commands/feature.md"
   local wrapped_prompt
+  local auto_suffix=""
+
+  if [[ "$auto_mode" == true ]]; then
+    auto_suffix="
+
+AUTONOMOUS MODE: Skip ALL checkpoints. Do NOT use AskUserQuestion at any point. At every checkpoint, automatically choose the recommended/proceed option. Make reasonable decisions for all clarifying questions based on the feature description and codebase context — do not ask the user anything. Run the entire workflow end-to-end autonomously through PR creation and review. Leave the PR open (do not merge). At the very end, output a single summary with: what was built, key decisions made, review findings addressed, and the PR URL."
+  fi
 
   launch_with_prompt() {
     wrapped_prompt="Execute the Feature Workflow now. The user's feature request is:
 
 $1
 
-Begin Phase 1: Requirements Gathering. Use the feature request above as the starting input — ask clarifying questions to fill gaps, then proceed through all phases."
+Begin Phase 1: Requirements Gathering. Use the feature request above as the starting input — ask clarifying questions to fill gaps, then proceed through all phases.${auto_suffix}"
     claude --append-system-prompt-file "$feature_md" "$wrapped_prompt"
   }
 
   if [[ $# -gt 0 ]]; then
     launch_with_prompt "$*"
   else
+    if [[ "$auto_mode" == true ]]; then
+      echo "Error: --auto requires a prompt."
+      echo ""
+      usage
+      exit 1
+    fi
     # Check if stdin is a terminal — if so, ask for a prompt
     if [[ -t 0 ]]; then
       echo "Describe the feature (or press Enter to skip):"

@@ -117,9 +117,28 @@ SETTINGS
 
 $prompt"
   else
-    echo "Run /feature to start the workflow."
-    echo ""
-    claude
+    # Check if stdin is a terminal — if so, ask for a prompt
+    if [[ -t 0 ]]; then
+      echo "Describe the feature (or press Enter to skip):"
+      echo ""
+      read -r "prompt?> "
+      if [[ -n "$prompt" ]]; then
+        claude "/feature
+
+$prompt"
+      else
+        echo "Run /feature to start the workflow."
+        echo ""
+        claude
+      fi
+    else
+      # Piped input
+      local prompt
+      prompt=$(cat)
+      claude "/feature
+
+$prompt"
+    fi
   fi
 }
 

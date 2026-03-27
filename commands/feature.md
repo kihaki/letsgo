@@ -223,11 +223,22 @@ After the GitHub reviewer completes:
 Present the final state to the user.
 
 ⏸️ **Checkpoint:** Use AskUserQuestion:
-- Question: "All review comments addressed. How does it look?"
+- Question: "All review comments addressed. What do you want to do with the PR?"
 - Options:
-  - "Looks good, we're done (Recommended)" — Finish
+  - "Merge it (Recommended)" — Merge the PR, then clean up
+  - "Leave it open" — Done, PR stays open for manual review
   - "Run another review round" — Spawn a fresh reviewer on the updated PR
-  - "Show me the comment threads" — Display all review threads and responses
+
+### If merging:
+
+1. Fetch latest base branch: `git fetch origin <base_branch>`
+2. Check for merge conflicts: `gh pr view <PR_NUMBER> --json mergeable`
+3. If there are conflicts:
+   - Merge the base branch into the feature branch: `git merge origin/<base_branch>`
+   - Resolve all conflicts, preserving the intent of the feature changes
+   - Commit the merge resolution, push
+4. Merge the PR: `gh pr merge <PR_NUMBER> --squash --delete-branch`
+5. Present confirmation to the user
 
 ---
 

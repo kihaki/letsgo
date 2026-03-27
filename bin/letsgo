@@ -111,11 +111,11 @@ SETTINGS
 
   cd "$worktree_dir"
 
+  local feature_md="${HOME}/.claude/commands/feature.md"
+
   if [[ $# -gt 0 ]]; then
     local prompt="$*"
-    claude "/feature
-
-$prompt"
+    claude --append-system-prompt-file "$feature_md" "$prompt"
   else
     # Check if stdin is a terminal — if so, ask for a prompt
     if [[ -t 0 ]]; then
@@ -123,9 +123,7 @@ $prompt"
       echo ""
       read -r "prompt?> "
       if [[ -n "$prompt" ]]; then
-        claude "/feature
-
-$prompt"
+        claude --append-system-prompt-file "$feature_md" "$prompt"
       else
         echo "Run /feature to start the workflow."
         echo ""
@@ -135,9 +133,7 @@ $prompt"
       # Piped input
       local prompt
       prompt=$(cat)
-      claude "/feature
-
-$prompt"
+      claude --append-system-prompt-file "$feature_md" "$prompt"
     fi
   fi
 }

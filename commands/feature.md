@@ -225,7 +225,7 @@ Present the final state to the user.
 ⏸️ **Checkpoint:** Use AskUserQuestion:
 - Question: "All review comments addressed. What do you want to do with the PR?"
 - Options:
-  - "Merge it (Recommended)" — Merge the PR, then clean up
+  - "Merge it" — Merge the PR, then clean up
   - "Leave it open" — Done, PR stays open for manual review
   - "Run another review round" — Spawn a fresh reviewer on the updated PR
 

@@ -112,10 +112,19 @@ SETTINGS
   cd "$worktree_dir"
 
   local feature_md="${HOME}/.claude/commands/feature.md"
+  local wrapped_prompt
+
+  launch_with_prompt() {
+    wrapped_prompt="Execute the Feature Workflow now. The user's feature request is:
+
+$1
+
+Begin Phase 1: Requirements Gathering. Use the feature request above as the starting input — ask clarifying questions to fill gaps, then proceed through all phases."
+    claude --append-system-prompt-file "$feature_md" "$wrapped_prompt"
+  }
 
   if [[ $# -gt 0 ]]; then
-    local prompt="$*"
-    claude --append-system-prompt-file "$feature_md" "$prompt"
+    launch_with_prompt "$*"
   else
     # Check if stdin is a terminal — if so, ask for a prompt
     if [[ -t 0 ]]; then
@@ -123,7 +132,7 @@ SETTINGS
       echo ""
       read -r "prompt?> "
       if [[ -n "$prompt" ]]; then
-        claude --append-system-prompt-file "$feature_md" "$prompt"
+        launch_with_prompt "$prompt"
       else
         echo "Run /feature to start the workflow."
         echo ""
@@ -133,7 +142,7 @@ SETTINGS
       # Piped input
       local prompt
       prompt=$(cat)
-      claude --append-system-prompt-file "$feature_md" "$prompt"
+      launch_with_prompt "$prompt"
     fi
   fi
 }

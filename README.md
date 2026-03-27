@@ -1,13 +1,13 @@
-# Orchestrator
+# LetsGo
 
-A structured AI development workflow for [Claude Code](https://claude.ai/code). Turns a one-line feature description into a reviewed, implemented pull request — with automated review gates at every stage.
+A structured development workflow for [Claude Code](https://claude.ai/code). Turns a one-line feature description into a reviewed, implemented pull request — with automated review gates at every stage.
 
 Works with any git repository. No project-specific configuration needed.
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/kihaki/orchestrator.git
+git clone https://github.com/kihaki/letsgo.git
 cd orchestrator
 ./install.sh
 ```
@@ -66,7 +66,7 @@ After all reviewers complete, feedback is synthesized and the plan is auto-revis
 ### File Layout
 
 ```
-orchestrator/
+letsgo/
 ├── install.sh                  # Symlinks everything into place
 ├── bin/
 │   └── letsgo                  # CLI entry point
@@ -97,10 +97,10 @@ your-repo/
 
 ### Artifacts
 
-Workflow artifacts live in `/tmp/orchestrator/<repo>/<branch>/artifacts/` — they are **not** committed to the repo:
+Workflow artifacts live in `/tmp/letsgo/<repo>/<branch>/artifacts/` — they are **not** committed to the repo:
 
 ```
-/tmp/orchestrator/your-repo/bold-nexus-a3f1/
+/tmp/letsgo/your-repo/bold-nexus-a3f1/
 ├── session.json              # Branch, base, timestamps
 └── artifacts/
     ├── requirements.md       # Phase 1

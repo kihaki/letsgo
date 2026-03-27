@@ -31,6 +31,15 @@ for cmd in "$SCRIPT_DIR/commands/"*.md; do
   echo "  ✓ /$( echo "$name" | sed 's/\.md$//' ) → $CLAUDE_COMMANDS_DIR/$name"
 done
 
+# --- reviewers ---
+REVIEWERS_DIR="${HOME}/.claude/letsgo/reviewers"
+mkdir -p "$REVIEWERS_DIR"
+for rev in "$SCRIPT_DIR/reviewers/"*.md; do
+  name=$(basename "$rev")
+  ln -sf "$rev" "$REVIEWERS_DIR/$name"
+  echo "  ✓ reviewer: $( echo "$name" | sed 's/\.md$//' ) → $REVIEWERS_DIR/$name"
+done
+
 echo ""
 
 # Check PATH

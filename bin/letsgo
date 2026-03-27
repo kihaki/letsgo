@@ -1,0 +1,126 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# -------------------------------------------------------------------
+# letsgo — create a git worktree + branch, then open Claude Code
+#           with the /feature workflow ready to go.
+# -------------------------------------------------------------------
+
+WORKTREE_ROOT="${LETSGO_WORKTREE_ROOT:-.worktrees}"
+
+detect_default_branch() {
+  local ref
+  ref=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null) && {
+    echo "${ref#refs/remotes/origin/}"
+    return
+  }
+  # fallback: check common names
+  for b in main master develop; do
+    if git show-ref --verify --quiet "refs/remotes/origin/$b" 2>/dev/null; then
+      echo "$b"
+      return
+    fi
+  done
+  echo "main"
+}
+
+generate_branch_name() {
+  local adjectives=(swift bright calm bold keen warm crisp fresh sharp smooth
+                    quick vivid steady agile prime rapid clear brave lucid stark)
+  local nouns=(falcon summit river forge pulse spark orbit prism atlas nexus
+               cedar flint vapor ridge crest ember quartz delta anvil beacon)
+  local adj=${adjectives[$RANDOM % ${#adjectives[@]}]}
+  local noun=${nouns[$RANDOM % ${#nouns[@]}]}
+  local id
+  id=$(openssl rand -hex 2)
+  echo "feature/${adj}-${noun}-${id}"
+}
+
+main() {
+  if ! git rev-parse --git-dir &>/dev/null; then
+    echo "Error: not inside a git repository."
+    exit 1
+  fi
+
+  echo "Fetching latest from origin..."
+  git fetch origin --quiet
+
+  local default_branch
+  default_branch=$(detect_default_branch)
+
+  local branch_name
+  branch_name=$(generate_branch_name)
+
+  local repo_root
+  repo_root=$(git rev-parse --show-toplevel)
+  local repo_name
+  repo_name=$(basename "$repo_root")
+
+  local worktree_dir="${repo_root}/../${WORKTREE_ROOT}/${repo_name}/${branch_name#feature/}"
+
+  mkdir -p "$(dirname "$worktree_dir")"
+  git worktree add -b "$branch_name" "$worktree_dir" "origin/${default_branch}"
+
+  # Store metadata for the workflow
+  local meta_dir="/tmp/orchestrator/${repo_name}/${branch_name#feature/}"
+  mkdir -p "$meta_dir"
+  cat > "$meta_dir/session.json" <<EOF
+{
+  "repo": "$repo_name",
+  "repo_root": "$repo_root",
+  "worktree": "$worktree_dir",
+  "branch": "$branch_name",
+  "base_branch": "$default_branch",
+  "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+
+  # Grant broad permissions for the worktree session
+  mkdir -p "$worktree_dir/.claude"
+  cat > "$worktree_dir/.claude/settings.local.json" <<'SETTINGS'
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Agent(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "Skill(*)"
+    ]
+  }
+}
+SETTINGS
+
+  # Ensure the local settings file won't be committed
+  if ! grep -q '.claude/settings.local.json' "$worktree_dir/.gitignore" 2>/dev/null; then
+    echo '.claude/settings.local.json' >> "$worktree_dir/.gitignore"
+  fi
+
+  echo ""
+  echo "  Worktree:  $worktree_dir"
+  echo "  Branch:    $branch_name"
+  echo "  Base:      origin/$default_branch"
+  echo ""
+  echo "Starting Claude Code..."
+  echo ""
+
+  cd "$worktree_dir"
+
+  if [[ $# -gt 0 ]]; then
+    local prompt="$*"
+    claude "/feature
+
+$prompt"
+  else
+    echo "Run /feature to start the workflow."
+    echo ""
+    claude
+  fi
+}
+
+main "$@"
